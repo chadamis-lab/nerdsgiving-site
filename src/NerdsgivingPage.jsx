@@ -580,6 +580,13 @@ export default function NerdsgivingPage() {
                   <p className="mt-4 text-base leading-7 text-zinc-400 sm:text-lg">
                     Subscribe to get a welcome email instantly, then stay on the full Nerdsgiving list for future announcements, schedule updates, and special event drops.
                   </p>
+
+                  <div className="mx-auto mt-6 h-[1px] w-40 bg-gradient-to-r from-transparent via-fuchsia-500 to-transparent opacity-60"></div>
+
+                  <div className="mt-6 flex items-center justify-center gap-3 text-sm text-zinc-400">
+                    <span className="text-2xl">🎲</span>
+                    <span>Roll a d20 after subscribing for a lucky nerd roll.</span>
+                  </div>
                 </div>
 
                 <form
@@ -608,7 +615,7 @@ export default function NerdsgivingPage() {
                   <button
                     type="submit"
                     disabled={subscribeStatus === "loading"}
-                    className="h-14 rounded-2xl bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-500 px-8 text-base font-semibold text-white shadow-[0_12px_40px_rgba(167,80,255,0.35)] transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-70 sm:px-7"
+                    className="h-14 rounded-2xl bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-500 px-8 text-base font-semibold text-white shadow-[0_0_40px_rgba(196,76,255,0.4)] transition-transform hover:scale-[1.02] hover:shadow-[0_0_60px_rgba(196,76,255,0.6)] disabled:cursor-not-allowed disabled:opacity-70 sm:px-7"
                   >
                     {subscribeStatus === "loading" ? "Subscribing..." : "Subscribe"}
                   </button>
@@ -627,8 +634,28 @@ export default function NerdsgivingPage() {
                 )}
 
                 {subscribed && (
-                  <div className="mx-auto mt-4 max-w-2xl text-center text-sm text-cyan-200/90">
-                    Welcome to the Nerdletter. More updates, invites, and launch drops are coming soon.
+                  <div className="mx-auto mt-6 max-w-2xl space-y-2 text-center text-sm text-cyan-200/90">
+                    <div>Welcome to the Nerdletter.</div>
+
+                    <div className="text-zinc-400">
+                      Visit the site →{" "}
+                      <a
+                        href="https://nerdsgiving.com"
+                        className="text-fuchsia-400 hover:text-fuchsia-300"
+                      >
+                        nerdsgiving.com
+                      </a>
+                    </div>
+
+                    <div className="text-zinc-400">
+                      Share Nerdsgiving →{" "}
+                      <a
+                        href="https://nerdsgiving.com"
+                        className="text-cyan-400 hover:text-cyan-300"
+                      >
+                        spread the word
+                      </a>
+                    </div>
                   </div>
                 )}
 
@@ -638,34 +665,23 @@ export default function NerdsgivingPage() {
                       🎲 You rolled a {diceResult}
                     </div>
                     <div className="mt-1 text-sm text-cyan-100/85">{diceFlavor}</div>
+
+                    {diceResult === 20 && (
+                      <div className="mt-4 rounded-2xl border border-fuchsia-400/30 bg-fuchsia-500/10 px-4 py-4 text-sm text-fuchsia-200 shadow-[0_0_25px_rgba(217,70,239,0.18)]">
+                        <div className="text-base font-bold">✨ Natural 20 unlocked</div>
+                        <div className="mt-1">
+                          Critical success. You found the hidden Nerdsgiving blessing.
+                        </div>
+                        <div className="mt-2 text-fuchsia-100/90">
+                          May your snacks be plentiful, your Wi-Fi be fast, and your dice roll hot.
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
                 <div className="mt-4 text-center text-xs text-zinc-500">
                   Tap the dice or shake your phone to roll a d20.
-                </div>
-
-                <div className="mt-8 grid gap-4 text-left sm:grid-cols-3">
-                  <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
-                    <div className="text-sm font-semibold text-fuchsia-300">Welcome email</div>
-                    <div className="mt-2 text-sm leading-6 text-zinc-400">
-                      Instant confirmation plus your first branded message.
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
-                    <div className="text-sm font-semibold text-cyan-300">Audience management</div>
-                    <div className="mt-2 text-sm leading-6 text-zinc-400">
-                      Store, segment, and export your list whenever you need.
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
-                    <div className="text-sm font-semibold text-emerald-300">Campaign-ready</div>
-                    <div className="mt-2 text-sm leading-6 text-zinc-400">
-                      Send announcements, launch emails, and reminders later.
-                    </div>
-                  </div>
                 </div>
               </div>
             </section>
