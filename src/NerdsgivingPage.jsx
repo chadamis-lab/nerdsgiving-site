@@ -585,7 +585,6 @@ export default function NerdsgivingPage() {
 
                   <div className="mt-6 flex items-center justify-center gap-3 text-sm text-zinc-400">
                     <span className="text-2xl">🎲</span>
-                    <span>Roll a d20 after subscribing for a lucky nerd roll.</span>
                   </div>
                 </div>
 
@@ -681,7 +680,6 @@ export default function NerdsgivingPage() {
                 )}
 
                 <div className="mt-4 text-center text-xs text-zinc-500">
-                  Tap the dice or shake your phone to roll a d20.
                 </div>
               </div>
             </section>
