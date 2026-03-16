@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 
 const TARGET_DATE_MS = new Date("2027-02-20T00:00:00").getTime()
-const BUTTONDOWN_EMBED_URL = "https://buttondown.email/api/emails/embed-subscribe/chadamis"
+const MAILERLITE_FORM_ACTION =
+  "https://assets.mailerlite.com/jsonp/2197156/forms/182130170613728782/subscribe"
 
 function getTimeLeft() {
   const diff = Math.max(0, TARGET_DATE_MS - Date.now())
@@ -162,7 +163,7 @@ export default function NerdsgivingPage() {
     }, 1200)
   }
 
-  const handleSubscribe = async (e) => {
+  const handleSubscribe = (e) => {
     e.preventDefault()
 
     const trimmedEmail = email.trim()
@@ -171,29 +172,57 @@ export default function NerdsgivingPage() {
     setSubscribeStatus("loading")
     setSubscribeMessage("")
 
-    try {
-      const formData = new FormData()
-      formData.append("email", trimmedEmail)
+    const form = e.currentTarget
 
-      const response = await fetch(BUTTONDOWN_EMBED_URL, {
-        method: "POST",
-        mode: "cors",
-        body: formData,
-      })
+    const iframe = document.createElement("iframe")
+    const targetName = `mailerlite-hidden-${Date.now()}`
+    iframe.name = targetName
+    iframe.style.display = "none"
+    document.body.appendChild(iframe)
 
-      if (!response.ok) {
-        throw new Error("Subscription failed")
-      }
+    form.target = targetName
+
+    let finished = false
+
+    iframe.onload = () => {
+      if (finished) return
+      finished = true
 
       setSubscribed(true)
       setSubscribeStatus("success")
       setSubscribeMessage("You're in! Check your inbox for a confirmation email.")
       setEmail("")
       triggerDiceRoll()
+
+      window.setTimeout(() => {
+        iframe.remove()
+      }, 1000)
+    }
+
+    try {
+      form.submit()
     } catch {
+      finished = true
       setSubscribeStatus("error")
       setSubscribeMessage("Could not subscribe right now. Please try again in a moment.")
+      iframe.remove()
+      return
     }
+
+    window.setTimeout(() => {
+      if (finished) return
+      finished = true
+
+      setSubscribed(true)
+      setSubscribeStatus("success")
+      setSubscribeMessage("You're in! Check your inbox for a confirmation email.")
+      setEmail("")
+      triggerDiceRoll()
+
+      window.setTimeout(() => {
+        iframe.remove()
+      }, 1000)
+    }, 1500)
   }
 
   const cards = useMemo(
@@ -554,6 +583,8 @@ export default function NerdsgivingPage() {
                 </div>
 
                 <form
+                  action={MAILERLITE_FORM_ACTION}
+                  method="post"
                   className="mx-auto mt-8 flex max-w-2xl flex-col gap-4 sm:flex-row"
                   onSubmit={handleSubscribe}
                 >
@@ -561,6 +592,7 @@ export default function NerdsgivingPage() {
                     <div className="absolute inset-0 rounded-2xl bg-fuchsia-500/15 blur-lg" />
                     <input
                       type="email"
+                      name="fields[email]"
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -569,6 +601,9 @@ export default function NerdsgivingPage() {
                       className="relative h-14 w-full rounded-2xl border border-white/10 bg-[#100b1b]/90 px-5 text-white outline-none placeholder:text-zinc-500 focus:border-fuchsia-400/50 disabled:cursor-not-allowed disabled:opacity-70"
                     />
                   </div>
+
+                  <input type="hidden" name="ml-submit" value="1" />
+                  <input type="hidden" name="anticsrf" value="true" />
 
                   <button
                     type="submit"
