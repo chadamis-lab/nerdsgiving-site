@@ -4,6 +4,9 @@ import { useEffect, useId, useMemo, useRef, useState } from "react"
 
 const TARGET_DATE_MS = new Date(2027, 1, 20, 0, 0, 0).getTime()
 
+const MAILERLITE_ACTION =
+  "https://assets.mailerlite.com/jsonp/2197156/forms/182130170613728782/subscribe"
+
 const ALL_GLYPHS = [
   {
     id: "controller",
@@ -151,9 +154,7 @@ function FloatingGlyph({ className, children, duration = 8, delay = 0, reduceMot
       aria-hidden="true"
       className={`absolute select-none ${className}`}
       style={{
-        animation: reduceMotion
-          ? "none"
-          : `float ${duration}s ease-in-out ${delay}s infinite`,
+        animation: reduceMotion ? "none" : `float ${duration}s ease-in-out ${delay}s infinite`,
       }}
     >
       {children}
@@ -214,9 +215,13 @@ export default function NerdsgivingPage() {
   const [timeLeft, setTimeLeft] = useState(getTimeLeft())
   const [email, setEmail] = useState("")
   const [subscribed, setSubscribed] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState("")
+  const [successMessage, setSuccessMessage] = useState("")
   const [isMobile, setIsMobile] = useState(false)
   const [reduceMotion, setReduceMotion] = useState(false)
   const rafRef = useRef(0)
+  const hiddenFormRef = useRef(null)
 
   useEffect(() => {
     const updateViewportMode = () => {
@@ -298,14 +303,36 @@ export default function NerdsgivingPage() {
 
     return visibleGlyphs.map((glyph) => ({
       ...glyph,
-      symbol: glyph.symbol === "d20" ? <D20Icon /> : glyph.symbol,
+      symbol: glyph.symbol === "d20" ? <D20Icon key={glyph.id} /> : glyph.symbol,
     }))
   }, [isMobile])
 
   const handleSubscribe = (e) => {
     e.preventDefault()
-    if (!email.trim() || subscribed) return
-    setSubscribed(true)
+
+    if (!email.trim() || isSubmitting || subscribed) return
+
+    setIsSubmitting(true)
+    setSubmitError("")
+    setSuccessMessage("")
+
+    try {
+      if (!hiddenFormRef.current) {
+        throw new Error("MailerLite form is not ready.")
+      }
+
+      hiddenFormRef.current.submit()
+
+      setSubscribed(true)
+      setSuccessMessage(
+        "You’re in. Check your inbox for the welcome email and future Nerdsgiving updates."
+      )
+      setEmail("")
+    } catch (error) {
+      setSubmitError(error.message || "Something went wrong. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const mouseX = reduceMotion ? 0 : mouse.x
@@ -556,22 +583,42 @@ export default function NerdsgivingPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Enter your email"
+                      autoComplete="email"
                       className="relative h-14 w-full rounded-2xl border border-white/10 bg-[#100b1b]/90 px-5 text-white outline-none placeholder:text-zinc-500 focus:border-fuchsia-400/50"
                     />
                   </div>
                   <button
                     type="submit"
-                    disabled={subscribed}
+                    disabled={subscribed || isSubmitting}
                     className="h-14 rounded-2xl bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-500 px-8 text-base font-semibold text-white shadow-[0_12px_40px_rgba(167,80,255,0.35)] transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60 sm:px-7"
                   >
-                    {subscribed ? "Subscribed" : "Subscribe"}
+                    {isSubmitting ? "Subscribing..." : subscribed ? "Subscribed" : "Subscribe"}
                   </button>
                 </form>
 
-                {subscribed && (
+                <form
+                  ref={hiddenFormRef}
+                  action={MAILERLITE_ACTION}
+                  method="post"
+                  target="_blank"
+                  className="hidden"
+                  aria-hidden="true"
+                  tabIndex={-1}
+                >
+                  <input type="email" name="fields[email]" value={email} readOnly />
+                  <input type="hidden" name="ml-submit" value="1" />
+                  <input type="hidden" name="anticsrf" value="true" />
+                </form>
+
+                {successMessage && (
                   <div className="mx-auto mt-5 max-w-2xl rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-5 py-4 text-left text-sm text-emerald-200">
-                    You’re in. In the full build, this form will add subscribers to your mailing
-                    list and trigger an automatic welcome email right after signup.
+                    {successMessage}
+                  </div>
+                )}
+
+                {submitError && (
+                  <div className="mx-auto mt-5 max-w-2xl rounded-2xl border border-rose-400/20 bg-rose-400/10 px-5 py-4 text-left text-sm text-rose-200">
+                    {submitError}
                   </div>
                 )}
               </div>
