@@ -1,3 +1,4 @@
+import Head from "next/head"
 import { useEffect, useMemo, useRef, useState } from "react"
 
 const TARGET_DATE_MS = new Date("2027-02-20T00:00:00").getTime()
@@ -34,6 +35,17 @@ function CountdownCard({ value, label }) {
   )
 }
 
+function D20Icon({ className = "", rolling = false, title }) {
+  return (
+    <i
+      className={`fa-solid fa-dice-d20 d20-icon ${rolling ? "rolling" : ""} ${className}`}
+      aria-hidden={title ? undefined : "true"}
+      aria-label={title}
+      title={title}
+    />
+  )
+}
+
 function FloatingGlyph({
   className,
   children,
@@ -51,7 +63,9 @@ function FloatingGlyph({
       title={title}
       aria-label={title}
       onClick={onClick}
-      className={`absolute select-none ${className} ${clickable ? "cursor-pointer" : "cursor-default"}`}
+      className={`absolute select-none ${className} ${
+        clickable ? "cursor-pointer" : "cursor-default"
+      }`}
       style={{
         animation: `float ${duration}s ease-in-out ${delay}s infinite`,
         ...style,
@@ -155,7 +169,10 @@ export default function NerdsgivingPage() {
       setDiceFlavor("Maybe blame the dice goblins.")
     }
 
-    setDiceRolling(true)
+    setDiceRolling(false)
+    requestAnimationFrame(() => {
+      setDiceRolling(true)
+    })
 
     if (diceTimeoutRef.current) clearTimeout(diceTimeoutRef.current)
     diceTimeoutRef.current = window.setTimeout(() => {
@@ -303,8 +320,14 @@ export default function NerdsgivingPage() {
         delay: 0.9,
       },
       {
-        className: "left-[12%] bottom-[18%] text-4xl text-amber-200/65",
-        symbol: "🎲",
+        className: "left-[12%] bottom-[18%] flex h-14 w-14 items-center justify-center",
+        symbol: (
+          <D20Icon
+            className="idle text-[2.25rem] drop-shadow-[0_0_16px_rgba(192,132,252,0.35)]"
+            rolling={diceRolling}
+            title="Roll a d20"
+          />
+        ),
         duration: 8.7,
         delay: 0.6,
         style: diceRolling
@@ -349,6 +372,13 @@ export default function NerdsgivingPage() {
 
   return (
     <>
+      <Head>
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        />
+      </Head>
+
       <style>{`
         @keyframes float {
           0% { transform: translateY(0px) rotate(0deg); }
@@ -385,6 +415,48 @@ export default function NerdsgivingPage() {
           75% { transform: rotate(270deg) scale(1.12); }
           100% { transform: rotate(360deg) scale(1); }
         }
+        @keyframes d20Float {
+          0% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-2px) rotate(-2deg); }
+          100% { transform: translateY(0px) rotate(0deg); }
+        }
+
+        .d20-icon {
+          display: inline-block;
+          color: #7e22ce;
+          filter:
+            drop-shadow(0 2px 4px rgba(0, 0, 0, 0.28))
+            drop-shadow(0 0 8px rgba(168, 85, 247, 0.16));
+          transition:
+            transform 0.25s ease,
+            filter 0.25s ease,
+            color 0.25s ease;
+          transform-origin: center;
+          line-height: 1;
+        }
+
+        .d20-icon.idle {
+          animation: d20Float 3.6s ease-in-out infinite;
+        }
+
+        .d20-icon:hover {
+          transform: translateY(-2px) rotate(6deg) scale(1.08);
+          filter:
+            drop-shadow(0 4px 10px rgba(126, 34, 206, 0.35))
+            drop-shadow(0 0 10px rgba(168, 85, 247, 0.25));
+          color: #9333ea;
+        }
+
+        .d20-icon.rolling {
+          animation: d20Roll 700ms ease-in-out;
+        }
+
+        @keyframes d20Roll {
+          0% { transform: rotate(0deg) scale(1); }
+          30% { transform: rotate(120deg) scale(1.08); }
+          60% { transform: rotate(260deg) scale(0.98); }
+          100% { transform: rotate(360deg) scale(1); }
+        }
       `}</style>
 
       <div className="min-h-screen overflow-hidden bg-[#05030d] text-white">
@@ -419,8 +491,8 @@ export default function NerdsgivingPage() {
             className="pointer-events-none absolute inset-0 opacity-60"
             style={{ transform: `translate(${mouse.x * 10}px, ${mouse.y * 10}px)` }}
           >
-            {glyphs.map((glyph) => (
-              <div key={`${glyph.symbol}-${glyph.className}`} className="pointer-events-auto">
+            {glyphs.map((glyph, index) => (
+              <div key={`${index}-${glyph.className}`} className="pointer-events-auto">
                 <FloatingGlyph
                   className={glyph.className}
                   duration={glyph.duration}
@@ -540,7 +612,7 @@ export default function NerdsgivingPage() {
 
                     <div className="mt-4 space-y-4">
                       {[
-                        ["🎲", "Game night energy"],
+                        ["d20", "Game night energy"],
                         ["🍕", "Comfort food and snacks"],
                         ["🛸", "Sci-fi, fantasy, and fandom chaos"],
                         ["💜", "Gratitude for the things you love"],
@@ -549,8 +621,12 @@ export default function NerdsgivingPage() {
                           key={label}
                           className="flex items-center gap-4 rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-4"
                         >
-                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.05] text-2xl">
-                            {icon}
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.05]">
+                            {icon === "d20" ? (
+                              <D20Icon className="idle text-[1.95rem] text-[#7e22ce]" />
+                            ) : (
+                              <span className="text-2xl text-violet-300">{icon}</span>
+                            )}
                           </div>
                           <div className="text-base font-medium text-zinc-200">{label}</div>
                         </div>
@@ -584,7 +660,7 @@ export default function NerdsgivingPage() {
                   <div className="mx-auto mt-6 h-[1px] w-40 bg-gradient-to-r from-transparent via-fuchsia-500 to-transparent opacity-60"></div>
 
                   <div className="mt-6 flex items-center justify-center gap-3 text-sm text-zinc-400">
-                    <span className="text-2xl">🎲</span>
+                    <D20Icon className="idle text-[2.1rem]" />
                     <span>Roll a d20 after subscribing for a lucky nerd roll.</span>
                   </div>
                 </div>
@@ -661,8 +737,9 @@ export default function NerdsgivingPage() {
 
                 {diceResult !== null && (
                   <div className="mx-auto mt-5 max-w-2xl rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-5 py-4 text-center">
-                    <div className="text-lg font-bold text-cyan-200">
-                      🎲 You rolled a {diceResult}
+                    <div className="flex items-center justify-center gap-3 text-lg font-bold text-cyan-200">
+                      <D20Icon className="text-[2.1rem]" rolling={diceRolling} />
+                      <span>You rolled a {diceResult}</span>
                     </div>
                     <div className="mt-1 text-sm text-cyan-100/85">{diceFlavor}</div>
 
@@ -680,8 +757,9 @@ export default function NerdsgivingPage() {
                   </div>
                 )}
 
-                <div className="mt-4 text-center text-xs text-zinc-500">
-                  Tap the dice or shake your phone to roll a d20.
+                <div className="mt-4 flex items-center justify-center gap-2 text-center text-xs text-zinc-500">
+                  <D20Icon className="idle text-base" />
+                  <span>Tap the d20 or shake your phone to roll.</span>
                 </div>
               </div>
             </section>
