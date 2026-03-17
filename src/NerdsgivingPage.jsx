@@ -34,10 +34,12 @@ function CountdownCard({ value, label }) {
   )
 }
 
-function D20Icon({ className = "", rolling = false, title }) {
+function D20Icon({ className = "", rolling = false, glowing = false, title }) {
   return (
     <i
-      className={`fa-solid fa-dice-d20 d20-icon ${rolling ? "rolling" : ""} ${className}`}
+      className={`fa-solid fa-dice-d20 d20-icon ${rolling ? "rolling" : ""} ${
+        glowing ? "glowing" : ""
+      } ${className}`}
       aria-hidden={title ? undefined : "true"}
       aria-label={title}
       title={title}
@@ -413,6 +415,24 @@ export default function NerdsgivingPage() {
           60% { transform: rotate(260deg) scale(0.98); }
           100% { transform: rotate(360deg) scale(1); }
         }
+        @keyframes d20GlowPulse {
+          0% {
+            filter:
+              drop-shadow(0 2px 4px rgba(0, 0, 0, 0.28))
+              drop-shadow(0 0 8px rgba(168, 85, 247, 0.16));
+          }
+          35% {
+            filter:
+              drop-shadow(0 4px 10px rgba(126, 34, 206, 0.42))
+              drop-shadow(0 0 18px rgba(217, 70, 239, 0.52))
+              drop-shadow(0 0 28px rgba(168, 85, 247, 0.4));
+          }
+          100% {
+            filter:
+              drop-shadow(0 2px 4px rgba(0, 0, 0, 0.28))
+              drop-shadow(0 0 8px rgba(168, 85, 247, 0.16));
+          }
+        }
 
         .d20-icon {
           display: inline-block;
@@ -430,6 +450,10 @@ export default function NerdsgivingPage() {
 
         .d20-icon.idle {
           animation: d20Float 3.6s ease-in-out infinite;
+        }
+
+        .d20-icon.glowing {
+          animation: d20GlowPulse 700ms ease-out;
         }
 
         .d20-icon:hover {
@@ -609,21 +633,22 @@ export default function NerdsgivingPage() {
                         >
                           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.05]">
                             {icon === "d20" ? (
-  <button
-    type="button"
-    onClick={triggerDiceRoll}
-    title="Roll a d20"
-    aria-label="Roll a d20"
-    className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.05]"
-  >
-    <D20Icon
-      className="text-[1.95rem] text-[#7e22ce] cursor-pointer"
-      rolling={diceRolling}
-    />
-  </button>
-) : (
-  <span className="text-2xl text-violet-300">{icon}</span>
-)}
+                              <button
+                                type="button"
+                                onClick={triggerDiceRoll}
+                                title="Roll a d20"
+                                aria-label="Roll a d20"
+                                className="flex h-12 w-12 items-center justify-center rounded-2xl"
+                              >
+                                <D20Icon
+                                  className="text-[1.95rem] text-[#7e22ce] cursor-pointer"
+                                  rolling={diceRolling}
+                                  glowing={diceRolling}
+                                />
+                              </button>
+                            ) : (
+                              <span className="text-2xl text-violet-300">{icon}</span>
+                            )}
                           </div>
                           <div className="text-base font-medium text-zinc-200">{label}</div>
                         </div>
@@ -657,20 +682,22 @@ export default function NerdsgivingPage() {
                   <div className="mx-auto mt-6 h-[1px] w-40 bg-gradient-to-r from-transparent via-fuchsia-500 to-transparent opacity-60"></div>
 
                   <div className="mt-6 flex items-center justify-center gap-3 text-sm text-zinc-400">
-  <button
-    type="button"
-    onClick={triggerDiceRoll}
-    title="Roll a d20"
-    aria-label="Roll a d20"
-    className="flex items-center justify-center rounded-2xl"
-  >
-    <D20Icon
-      className="idle text-[2.1rem] cursor-pointer"
-      rolling={diceRolling}
-    />
-  </button>
-  <span>Roll a d20 after subscribing for a lucky nerd roll.</span>
-</div>
+                    <button
+                      type="button"
+                      onClick={triggerDiceRoll}
+                      title="Roll a d20"
+                      aria-label="Roll a d20"
+                      className="flex items-center justify-center rounded-2xl"
+                    >
+                      <D20Icon
+                        className="idle text-[2.1rem] cursor-pointer"
+                        rolling={diceRolling}
+                        glowing={diceRolling}
+                      />
+                    </button>
+                    <span>Roll a d20 after subscribing for a lucky roll.</span>
+                  </div>
+                </div>
 
                 <form
                   action={MAILERLITE_FORM_ACTION}
@@ -745,7 +772,7 @@ export default function NerdsgivingPage() {
                 {diceResult !== null && (
                   <div className="mx-auto mt-5 max-w-2xl rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-5 py-4 text-center">
                     <div className="flex items-center justify-center gap-3 text-lg font-bold text-cyan-200">
-                      <D20Icon className="text-[2.1rem]" rolling={diceRolling} />
+                      <D20Icon className="text-[2.1rem]" rolling={diceRolling} glowing={diceRolling} />
                       <span>You rolled a {diceResult}</span>
                     </div>
                     <div className="mt-1 text-sm text-cyan-100/85">{diceFlavor}</div>
