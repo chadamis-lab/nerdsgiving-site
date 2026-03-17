@@ -53,27 +53,17 @@ function FloatingGlyph({
   duration = 8,
   delay = 0,
   style = {},
-  onClick,
-  title,
 }) {
-  const clickable = typeof onClick === "function"
-
   return (
-    <button
-      type="button"
-      title={title}
-      aria-label={title}
-      onClick={onClick}
-      className={`absolute select-none ${className} ${
-        clickable ? "cursor-pointer" : "cursor-default"
-      }`}
+    <div
+      className={`absolute select-none ${className}`}
       style={{
         animation: `float ${duration}s ease-in-out ${delay}s infinite`,
         ...style,
       }}
     >
       {children}
-    </button>
+    </div>
   )
 }
 
@@ -88,6 +78,8 @@ export default function NerdsgivingPage() {
   const [diceRolling, setDiceRolling] = useState(false)
   const [diceResult, setDiceResult] = useState(null)
   const [diceFlavor, setDiceFlavor] = useState("")
+  const [motionEnabled, setMotionEnabled] = useState(false)
+  const [motionPermissionState, setMotionPermissionState] = useState("unknown")
   const rafRef = useRef(0)
   const shakeTimeoutRef = useRef(null)
   const diceTimeoutRef = useRef(null)
@@ -131,6 +123,8 @@ export default function NerdsgivingPage() {
     let shakeCount = 0
 
     const handleDeviceMotion = (e) => {
+      if (!motionEnabled) return
+
       const acc = e.accelerationIncludingGravity
       if (!acc || window.innerWidth >= 640) return
 
@@ -169,7 +163,7 @@ export default function NerdsgivingPage() {
         link.parentNode.removeChild(link)
       }
     }
-  }, [])
+  }, [motionEnabled])
 
   const triggerDiceRoll = () => {
     const roll = Math.floor(Math.random() * 20) + 1
@@ -180,6 +174,8 @@ export default function NerdsgivingPage() {
       setDiceFlavor("Critical success.")
     } else if (roll === 1) {
       setDiceFlavor("Critical fail.")
+    } else if (roll === 2) {
+      setDiceFlavor("Shout out to the 2 crew!")
     } else if (roll >= 15) {
       setDiceFlavor("Big nerd energy.")
     } else if (roll >= 10) {
@@ -197,6 +193,47 @@ export default function NerdsgivingPage() {
     diceTimeoutRef.current = window.setTimeout(() => {
       setDiceRolling(false)
     }, 1200)
+  }
+
+  const enableMotionIfNeeded = async () => {
+    if (typeof window === "undefined") return true
+
+    if (!window.isSecureContext) {
+      setMotionPermissionState("unsupported")
+      return false
+    }
+
+    if (typeof DeviceMotionEvent === "undefined") {
+      setMotionPermissionState("unsupported")
+      return false
+    }
+
+    if (typeof DeviceMotionEvent.requestPermission === "function") {
+      try {
+        const result = await DeviceMotionEvent.requestPermission()
+
+        if (result === "granted") {
+          setMotionEnabled(true)
+          setMotionPermissionState("granted")
+          return true
+        }
+
+        setMotionPermissionState("denied")
+        return false
+      } catch {
+        setMotionPermissionState("denied")
+        return false
+      }
+    }
+
+    setMotionEnabled(true)
+    setMotionPermissionState("granted")
+    return true
+  }
+
+  const handleDiceTap = async () => {
+    await enableMotionIfNeeded()
+    triggerDiceRoll()
   }
 
   const handleSubscribe = (e) => {
@@ -508,8 +545,6 @@ export default function NerdsgivingPage() {
                   duration={glyph.duration}
                   delay={glyph.delay}
                   style={glyph.style}
-                  onClick={glyph.isDice ? triggerDiceRoll : undefined}
-                  title={glyph.isDice ? "Roll a d20" : undefined}
                 >
                   {glyph.symbol}
                 </FloatingGlyph>
@@ -635,7 +670,7 @@ export default function NerdsgivingPage() {
                             {icon === "d20" ? (
                               <button
                                 type="button"
-                                onClick={triggerDiceRoll}
+                                onClick={handleDiceTap}
                                 title="Roll a d20"
                                 aria-label="Roll a d20"
                                 className="flex h-12 w-12 items-center justify-center rounded-2xl"
@@ -684,7 +719,7 @@ export default function NerdsgivingPage() {
                   <div className="mt-6 flex items-center justify-center gap-3 text-sm text-zinc-400">
                     <button
                       type="button"
-                      onClick={triggerDiceRoll}
+                      onClick={handleDiceTap}
                       title="Roll a d20"
                       aria-label="Roll a d20"
                       className="flex items-center justify-center rounded-2xl"
@@ -695,8 +730,14 @@ export default function NerdsgivingPage() {
                         glowing={diceRolling}
                       />
                     </button>
-                    <span>Roll a d20 after subscribing for a lucky roll.</span>
+                    <span>Roll a d20 after subscribing for a lucky nerd roll.</span>
                   </div>
+
+                  {isMobile && motionPermissionState !== "granted" && (
+                    <div className="mt-3 text-xs text-zinc-500">
+                      Tap a d20 once to enable shake-to-roll on iPhone.
+                    </div>
+                  )}
                 </div>
 
                 <form
