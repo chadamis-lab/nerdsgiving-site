@@ -1,4 +1,3 @@
-import Head from "next/head"
 import { useEffect, useMemo, useRef, useState } from "react"
 
 const TARGET_DATE_MS = new Date("2027-02-20T00:00:00").getTime()
@@ -92,6 +91,20 @@ export default function NerdsgivingPage() {
   const diceTimeoutRef = useRef(null)
 
   useEffect(() => {
+    const fontAwesomeHref =
+      "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+
+    let link = document.querySelector(`link[href="${fontAwesomeHref}"]`)
+    let createdLink = false
+
+    if (!link) {
+      link = document.createElement("link")
+      link.rel = "stylesheet"
+      link.href = fontAwesomeHref
+      document.head.appendChild(link)
+      createdLink = true
+    }
+
     const updateViewportMode = () => {
       setIsMobile(window.innerWidth < 640)
     }
@@ -149,6 +162,10 @@ export default function NerdsgivingPage() {
       if (shakeTimeoutRef.current) clearTimeout(shakeTimeoutRef.current)
       if (diceTimeoutRef.current) clearTimeout(diceTimeoutRef.current)
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
+
+      if (createdLink && link?.parentNode) {
+        link.parentNode.removeChild(link)
+      }
     }
   }, [])
 
@@ -320,22 +337,6 @@ export default function NerdsgivingPage() {
         delay: 0.9,
       },
       {
-        className: "left-[12%] bottom-[18%] flex h-14 w-14 items-center justify-center",
-        symbol: (
-          <D20Icon
-            className="idle text-[2.25rem] drop-shadow-[0_0_16px_rgba(192,132,252,0.35)]"
-            rolling={diceRolling}
-            title="Roll a d20"
-          />
-        ),
-        duration: 8.7,
-        delay: 0.6,
-        style: diceRolling
-          ? { animation: "diceRoll 0.8s ease-in-out 1, float 8.7s ease-in-out 0.6s infinite" }
-          : {},
-        isDice: true,
-      },
-      {
         className: "right-[18%] top-[52%] text-3xl text-cyan-200/50 hidden sm:block",
         symbol: "🧩",
         duration: 9.8,
@@ -368,17 +369,10 @@ export default function NerdsgivingPage() {
     ]
 
     return isMobile ? allGlyphs.filter((g) => !g.className.includes("hidden sm:block")) : allGlyphs
-  }, [isMobile, diceRolling])
+  }, [isMobile])
 
   return (
     <>
-      <Head>
-        <link
-          rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-        />
-      </Head>
-
       <style>{`
         @keyframes float {
           0% { transform: translateY(0px) rotate(0deg); }
@@ -408,17 +402,16 @@ export default function NerdsgivingPage() {
           0%, 100% { opacity: 0.18; transform: scale(1); }
           50% { opacity: 0.8; transform: scale(1.35); }
         }
-        @keyframes diceRoll {
-          0% { transform: rotate(0deg) scale(1); }
-          25% { transform: rotate(90deg) scale(1.15); }
-          50% { transform: rotate(180deg) scale(0.96); }
-          75% { transform: rotate(270deg) scale(1.12); }
-          100% { transform: rotate(360deg) scale(1); }
-        }
         @keyframes d20Float {
           0% { transform: translateY(0px) rotate(0deg); }
           50% { transform: translateY(-2px) rotate(-2deg); }
           100% { transform: translateY(0px) rotate(0deg); }
+        }
+        @keyframes d20Roll {
+          0% { transform: rotate(0deg) scale(1); }
+          30% { transform: rotate(120deg) scale(1.08); }
+          60% { transform: rotate(260deg) scale(0.98); }
+          100% { transform: rotate(360deg) scale(1); }
         }
 
         .d20-icon {
@@ -449,13 +442,6 @@ export default function NerdsgivingPage() {
 
         .d20-icon.rolling {
           animation: d20Roll 700ms ease-in-out;
-        }
-
-        @keyframes d20Roll {
-          0% { transform: rotate(0deg) scale(1); }
-          30% { transform: rotate(120deg) scale(1.08); }
-          60% { transform: rotate(260deg) scale(0.98); }
-          100% { transform: rotate(360deg) scale(1); }
         }
       `}</style>
 
@@ -623,10 +609,21 @@ export default function NerdsgivingPage() {
                         >
                           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.05]">
                             {icon === "d20" ? (
-                              <D20Icon className="idle text-[1.95rem] text-[#7e22ce]" />
-                            ) : (
-                              <span className="text-2xl text-violet-300">{icon}</span>
-                            )}
+  <button
+    type="button"
+    onClick={triggerDiceRoll}
+    title="Roll a d20"
+    aria-label="Roll a d20"
+    className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.05]"
+  >
+    <D20Icon
+      className="text-[1.95rem] text-[#7e22ce] cursor-pointer"
+      rolling={diceRolling}
+    />
+  </button>
+) : (
+  <span className="text-2xl text-violet-300">{icon}</span>
+)}
                           </div>
                           <div className="text-base font-medium text-zinc-200">{label}</div>
                         </div>
@@ -660,10 +657,20 @@ export default function NerdsgivingPage() {
                   <div className="mx-auto mt-6 h-[1px] w-40 bg-gradient-to-r from-transparent via-fuchsia-500 to-transparent opacity-60"></div>
 
                   <div className="mt-6 flex items-center justify-center gap-3 text-sm text-zinc-400">
-                    <D20Icon className="idle text-[2.1rem]" />
-                    <span>Roll a d20 after subscribing for a lucky nerd roll.</span>
-                  </div>
-                </div>
+  <button
+    type="button"
+    onClick={triggerDiceRoll}
+    title="Roll a d20"
+    aria-label="Roll a d20"
+    className="flex items-center justify-center rounded-2xl"
+  >
+    <D20Icon
+      className="idle text-[2.1rem] cursor-pointer"
+      rolling={diceRolling}
+    />
+  </button>
+  <span>Roll a d20 after subscribing for a lucky nerd roll.</span>
+</div>
 
                 <form
                   action={MAILERLITE_FORM_ACTION}
@@ -756,11 +763,6 @@ export default function NerdsgivingPage() {
                     )}
                   </div>
                 )}
-
-                <div className="mt-4 flex items-center justify-center gap-2 text-center text-xs text-zinc-500">
-                  <D20Icon className="idle text-base" />
-                  <span>Tap the d20 or shake your phone to roll.</span>
-                </div>
               </div>
             </section>
           </main>
